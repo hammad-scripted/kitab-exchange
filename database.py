@@ -1,6 +1,6 @@
-from colorama import init, Fore, Back, Style
 
-from sqlmodel import SQLModel, Field, Relationship, create_engine, Session
+
+from sqlmodel import SQLModel,create_engine, Session
 
 DATABASE_URL = "sqlite:///books.db"
 engine = create_engine(DATABASE_URL, echo=True)
