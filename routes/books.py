@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 from auth import verify_api_key
 from database import get_session
 from exceptions import BadRequestException, NotFoundException
-from models.books import Book, BookCreate, BookResponse
+from models.books import Book, BookCreate, BookResponse, BookUpdate
 from models.users import User
 
 router = APIRouter(prefix="/books", tags=["books"])
@@ -30,7 +30,9 @@ def list_books(
 
     books = session.exec(query).all()
     if not books:
-        raise NotFoundException("No available (unsold) books found matching your criteria")
+        raise NotFoundException(
+            "No available (unsold) books found matching your criteria"
+        )
     return books
 
 
@@ -43,12 +45,12 @@ def create_book(
     # Verify owner exists
     owner = session.get(User, book.user_id)
     if not owner:
-        raise NotFoundException(f"Cannot create book: User with ID {book.user_id} does not exist")
+        raise NotFoundException(
+            f"Cannot create book: User with ID {book.user_id} does not exist"
+        )
 
     # Prevent duplicate titles
-    existing_book = session.exec(
-        select(Book).where(Book.title == book.title)
-    ).first()
+    existing_book = session.exec(select(Book).where(Book.title == book.title)).first()
     if existing_book:
         raise BadRequestException(f"Book with title '{book.title}' already exists")
 
@@ -57,6 +59,41 @@ def create_book(
     session.commit()
     session.refresh(new_book)
     return new_book
+
+
+@router.patch(
+    "/{book_id}", response_model=BookResponse, description="Update a book listing"
+)
+def update_book(
+    book_id: int,
+    book: BookUpdate,
+    session: Session = Depends(get_session),
+    _: str = Depends(verify_api_key),
+):
+    db_book = session.get(Book, book_id)
+    if not db_book:
+        raise NotFoundException(f"Book with ID {book_id} not found")
+
+    updates = book.model_dump(exclude_unset=True)
+    if not updates:
+        raise BadRequestException("At least one book field must be provided")
+    if any(value is None for value in updates.values()):
+        raise BadRequestException("Book fields cannot be null")
+
+    if "title" in updates and updates["title"] != db_book.title:
+        duplicate = session.exec(
+            select(Book).where(Book.title == updates["title"], Book.id != book_id)
+        ).first()
+        if duplicate:
+            raise BadRequestException(
+                f"Book with title '{updates['title']}' already exists"
+            )
+
+    for field, value in updates.items():
+        setattr(db_book, field, value)
+    session.commit()
+    session.refresh(db_book)
+    return db_book
 
 
 @router.get("/{book_id}", response_model=BookResponse, description="Get a book by ID")

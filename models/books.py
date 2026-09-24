@@ -13,7 +13,7 @@ class Book(SQLModel, table=True):
     is_sold: bool = Field(default=False)
 
     # Foreign key now correctly points to table "users"
-    user_id: int = Field(default=None, foreign_key="users.id")
+    user_id: int = Field(foreign_key="users.id")
     owner: Optional["User"] = Relationship(back_populates="books")
 
 
@@ -39,3 +39,10 @@ class BookResponse(SQLModel):
     price: float
     is_sold: bool
     user_id: int
+
+
+class BookUpdate(SQLModel):
+    title: Optional[str] = None
+    author: Optional[str] = None
+    price: Optional[float] = None
+    is_sold: Optional[bool] = None

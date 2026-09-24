@@ -1,3 +1,4 @@
+from pydantic import EmailStr
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, TYPE_CHECKING
 
@@ -11,7 +12,7 @@ class User(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True)
-    email: str = Field(index=True)
+    email: str = Field(index=True, unique=True)
     college: str = Field(index=True)
     books: list["Book"] = Relationship(back_populates="owner")
 
@@ -25,7 +26,7 @@ User.model_rebuild()
 # Request body for creating a user
 class UserCreate(SQLModel):
     name: str
-    email: str
+    email: EmailStr
     college: str
 
 
