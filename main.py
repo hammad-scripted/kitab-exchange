@@ -1,3 +1,7 @@
+# import routes
+from routes.users import user_router
+from routes.books import book_router
+from exceptions import NotFoundException, not_found_exception_handler, BadRequestException, bad_request_exception_handler, InternalServerException, internal_server_exception_handler
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from database import create_tables
@@ -21,6 +25,21 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+
+
+
+# routes
+app.include_router(user_router)
+app.include_router(book_router)
+
+
+
+#exceptions
+
+
+app.add_exception_handler(NotFoundException, not_found_exception_handler)
+app.add_exception_handler(BadRequestException, bad_request_exception_handler)
+app.add_exception_handler(InternalServerException, internal_server_exception_handler)   
 
 
 @app.get("/")

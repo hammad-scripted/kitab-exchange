@@ -11,7 +11,7 @@ class Books(SQLModel, table=True):
     is_sold: bool = Field(default=False)
 
     # foreign key to user table
-    user_id: Optional[int] = Field(default=None, foreign_key="users.id")
+    user_id:  = Field(default=None, foreign_key="users.id")
     owner: Optional["User"] = Relationship(back_populates="books")
     
 # avoid circular import - a circular import is when two modules import each other
